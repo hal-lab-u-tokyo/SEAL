@@ -184,6 +184,10 @@ namespace seal
         // Set destination parameters as in encrypted
         destination.parms_id() = encrypted.parms_id();
         destination.scale() = encrypted.scale();
+
+        // memo(nozaki): add iNTT
+        auto ntt_tables = iter(context_data.small_ntt_tables());
+        inverse_ntt_negacyclic_harvey(RNSIter(destination.data(), coeff_count), coeff_modulus_size, ntt_tables);
     }
 
     void Decryptor::bgv_decrypt(const Ciphertext &encrypted, Plaintext &destination, MemoryPoolHandle pool)

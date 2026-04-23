@@ -215,25 +215,37 @@ namespace seal
         }
         else if (scheme == scheme_type::ckks)
         {
-            if (!plain.is_ntt_form())
-            {
-                throw invalid_argument("plain must be in NTT form");
-            }
-
             auto context_data_ptr = context_.get_context_data(plain.parms_id());
             if (!context_data_ptr)
             {
                 throw invalid_argument("plain is not valid for encryption parameters");
             }
-            encrypt_zero_internal(plain.parms_id(), is_asymmetric, save_seed, destination, pool);
-
             auto &parms = context_.get_context_data(plain.parms_id())->parms();
             auto &coeff_modulus = parms.coeff_modulus();
             size_t coeff_modulus_size = coeff_modulus.size();
             size_t coeff_count = parms.poly_modulus_degree();
 
+            if (!plain.is_ntt_form())
+            {
+                throw invalid_argument("plain must be in NTT form");
+            }
+
+            encrypt_zero_internal(plain.parms_id(), is_asymmetric, save_seed, destination, pool);
+
+            // memo(nozaki): add Encrypt NTT
+            // Transform plaintext copy to NTT domain (destination is ciphertext; do not NTT destination here).
+            // Since plain is constant(read-only), we need to make a copy...
+            Plaintext plain_copy = plain;
+            auto &context_data = *context_data_ptr;
+            auto ntt_tables = context_data.small_ntt_tables();
+            for (std::size_t i = 0; i < coeff_modulus_size; i++)
+            {
+                util::ntt_negacyclic_harvey(plain_copy.data(i * coeff_count), ntt_tables[i]);
+            }
+            // End of add Encrypt NTT
+
             // The plaintext gets added into the c_0 term of ciphertext (c_0,c_1).
-            ConstRNSIter plain_iter(plain.data(), coeff_count);
+            ConstRNSIter plain_iter(plain_copy.data(), coeff_count);
             RNSIter destination_iter = *iter(destination);
             add_poly_coeffmod(destination_iter, plain_iter, coeff_modulus_size, coeff_modulus, destination_iter);
 

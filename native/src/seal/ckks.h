@@ -618,11 +618,12 @@ namespace seal
                 }
             }
 
+            // memo(nozaki): comment out Encode NTT
             // Transform to NTT domain
-            for (std::size_t i = 0; i < coeff_modulus_size; i++)
-            {
-                util::ntt_negacyclic_harvey(destination.data(i * coeff_count), ntt_tables[i]);
-            }
+            // for (std::size_t i = 0; i < coeff_modulus_size; i++)
+            // {
+                // util::ntt_negacyclic_harvey(destination.data(i * coeff_count), ntt_tables[i]);
+            // }
 
             destination.parms_id() = parms_id;
             destination.scale() = scale;
@@ -683,11 +684,13 @@ namespace seal
             auto plain_copy(util::allocate_uint(rns_poly_uint64_count, pool));
             util::set_uint(plain.data(), rns_poly_uint64_count, plain_copy.get());
 
+            // memo(nozaki): comment out Decode NTT
             // Transform each polynomial from NTT domain
-            for (std::size_t i = 0; i < coeff_modulus_size; i++)
-            {
-                util::inverse_ntt_negacyclic_harvey(plain_copy.get() + (i * coeff_count), ntt_tables[i]);
-            }
+            // for (std::size_t i = 0; i < coeff_modulus_size; i++)
+            // {
+            //     util::inverse_ntt_negacyclic_harvey(plain_copy.get() + (i * coeff_count), ntt_tables[i]);
+            // }
+            // Finish comment out Decode NTT
 
             // CRT-compose the polynomial
             context_data.rns_tool()->base_q()->compose_array(plain_copy.get(), coeff_count, pool);
